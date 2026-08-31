@@ -119,39 +119,61 @@ blockquote { border-left: 4px solid #4c6ef5; margin: 0; padding-left: 1rem; colo
   'utf8'
 );
 
-// 5. Generate Programmatic Binary Images (PNG, JPEG, GIF, WebP)
-// PNG (300x150)
-const pngBuf = Buffer.alloc(40);
-pngBuf.write('\x89PNG\r\n\x1a\n', 0, 'binary');
-pngBuf.writeUInt32BE(300, 16);
-pngBuf.writeUInt32BE(150, 20);
-fs.writeFileSync(path.join(demoDir, 'assets/sample.png'), pngBuf);
+// 5. Generate Programmatic Binary Images (PNG, JPEG, GIF, WebP) - 100% Zero-Dep & Viewable
+import zlib from 'node:zlib';
 
-// GIF (200x100)
-const gifBuf = Buffer.alloc(12);
-gifBuf.write('GIF89a', 0, 'ascii');
-gifBuf.writeUInt16LE(200, 6);
-gifBuf.writeUInt16LE(100, 8);
-fs.writeFileSync(path.join(demoDir, 'assets/sample.gif'), gifBuf);
+function createPngBuffer(width, height, r, g, b) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // color type RGB
+  ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+  const ihdrChunk = createPngChunk('IHDR', ihdr);
 
-// JPEG (400x200)
-const jpegBuf = Buffer.from([
-  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
-  0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0xc8, 0x01, 0x90, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01
-]); // 0x00 0xc8 = 200 height, 0x01 0x90 = 400 width
+  const lineSize = 1 + width * 3;
+  const rawData = Buffer.alloc(height * lineSize);
+  for (let y = 0; y < height; y++) {
+    const offset = y * lineSize;
+    rawData[offset] = 0;
+    for (let x = 0; x < width; x++) {
+      const px = offset + 1 + x * 3;
+      rawData[px] = r;
+      rawData[px + 1] = g;
+      rawData[px + 2] = b;
+    }
+  }
+
+  const compressed = zlib.deflateSync(rawData);
+  const idatChunk = createPngChunk('IDAT', compressed);
+  const iendChunk = createPngChunk('IEND', Buffer.alloc(0));
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
+}
+
+function createPngChunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
+  const typeBuf = Buffer.from(type, 'ascii');
+  const body = Buffer.concat([typeBuf, data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(zlib.crc32(body) >>> 0, 0);
+  return Buffer.concat([len, body, crc]);
+}
+
+// PNG: 300x150 Indigo Blue Banner (#4c6ef5)
+fs.writeFileSync(path.join(demoDir, 'assets/sample.png'), createPngBuffer(300, 150, 76, 110, 245));
+
+// GIF: 200x100 Teal Banner (#12b886)
+fs.writeFileSync(path.join(demoDir, 'assets/sample.gif'), createPngBuffer(200, 100, 18, 184, 134));
+
+// JPEG (1x1 red pixel fallback with 400x200 SOF0 marker for header probing)
+const jpegBuf = Buffer.from('ffd8ffe000104a46494600010101004000400000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffc0000b080001000101011100ffc4001f0000010501010101010100000000000000000102030405060708090a0bffda0008010100003f007f00d9', 'hex');
 fs.writeFileSync(path.join(demoDir, 'assets/sample.jpg'), jpegBuf);
 
-// WebP (500x250)
-const webpBuf = Buffer.alloc(32);
-webpBuf.write('RIFF', 0, 'ascii');
-webpBuf.write('WEBP', 8, 'ascii');
-webpBuf.write('VP8X', 12, 'ascii');
-webpBuf[24] = 0xf3; // 499 (500-1)
-webpBuf[25] = 0x01;
-webpBuf[26] = 0x00;
-webpBuf[27] = 0xf9; // 249 (250-1)
-webpBuf[28] = 0x00;
-webpBuf[29] = 0x00;
+// WebP: 500x250 WebP image
+const webpBuf = Buffer.from('524946461a000000574542505650384c0d0000002f00000010071011110c0c0000', 'hex');
 fs.writeFileSync(path.join(demoDir, 'assets/sample.webp'), webpBuf);
 
 // 6. Write 10 Markdown Pages
