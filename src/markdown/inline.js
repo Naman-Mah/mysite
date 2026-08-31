@@ -133,7 +133,7 @@ export function parseInline(text, linkDefs = {}) {
       }
     }
 
-    // Autolink: <http://...> or <https://...>
+    // Autolink or Raw HTML tag
     if (text[i] === '<') {
       const closeAngle = text.indexOf('>', i + 1);
       if (closeAngle !== -1) {
@@ -144,6 +144,15 @@ export function parseInline(text, linkDefs = {}) {
           i = closeAngle + 1;
           continue;
         }
+      }
+
+      // Raw HTML tag pass-through (e.g. <img ... />, <a ...>, etc.)
+      const htmlTagMatch = text.slice(i).match(/^<(\/?[\w-]+)(?:\s+[^>]*|\s*)\/?>/);
+      if (htmlTagMatch) {
+        const fullTag = htmlTagMatch[0];
+        html += fullTag;
+        i += fullTag.length;
+        continue;
       }
     }
 
