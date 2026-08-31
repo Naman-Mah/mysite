@@ -1,0 +1,4 @@
+✓ package.json dependencies: {} (empty)
+✓ package.json devDependencies: {} (empty)
+✓ scanned 30 source files — 0 non-stdlib imports found
+✓ zero third-party runtime dependencies confirmed
