@@ -30,6 +30,16 @@ That's not a placeholder. It's the whole point.
 
 ---
 
+## Bonus Challenges Claimed (+11 Points Total)
+
+| Bonus Challenge | Points | Verification / Implementation |
+| :--- | :---: | :--- |
+| **Reproducible Build** | **+5** | `mysite verify-reproducible` builds site twice and proves byte-identical SHA-256 hashes ([repro-hashes.txt](repro-hashes.txt)). |
+| **Package Killer** | **+3** | Reimplemented **`chalk`** (2.6B weekly downloads) in `src/cli/colors.js` using raw ANSI escape sequences. |
+| **STDLIB Log** | **+3** | Documented 15 real stdlib-for-package substitutions with detailed trade-off rationales in [STDLIB.md](STDLIB.md). |
+
+---
+
 ## Why this exists
 
 In September 2025, an attacker phished the maintainer of `chalk` and `debug` —
