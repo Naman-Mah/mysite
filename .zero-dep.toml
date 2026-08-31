@@ -1,0 +1,6 @@
+[project]
+name = "mysite"
+track = "A"
+description = "A zero-dependency Markdown-to-website generator hand-rolled using only Node.js stdlib."
+author = "Zero Dependency Hackathon Participant"
+license = "MIT"
