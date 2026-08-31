@@ -1,0 +1,6 @@
+{
+  "title": "Zero-Dep Demo Site",
+  "description": "A website generated with zero third-party npm dependencies using plain Node.js",
+  "author": "Zero Dependency Hackathon",
+  "baseUrl": "http://localhost:3000"
+}
